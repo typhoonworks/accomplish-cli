@@ -111,9 +111,7 @@ pub async fn create_project(
         .and_then(|v| v.as_str())
         .unwrap_or("Unknown");
 
-    println!(
-        "✓ Project '{project_name}' created successfully with identifier '{project_id}'"
-    );
+    println!("✓ Project '{project_name}' created successfully with identifier '{project_id}'");
 
     Ok(())
 }

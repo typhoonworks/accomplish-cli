@@ -194,9 +194,8 @@ pub async fn fetch_uncaptured_commits(
     commit_shas: &[String],
 ) -> Result<Value, ApiError> {
     let shas_param = commit_shas.join(",");
-    let endpoint = format!(
-        "api/v1/repositories/{repo_id}/commits?uncaptured=true&shas={shas_param}"
-    );
+    let endpoint =
+        format!("api/v1/repositories/{repo_id}/commits?uncaptured=true&shas={shas_param}");
     api_client.get(&endpoint, true).await
 }
 
