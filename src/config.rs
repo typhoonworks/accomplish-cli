@@ -31,23 +31,23 @@ impl Settings {
             .build()?;
 
         // 5) Extract each setting under the chosen profile
-        let api_base = cfg.get_string(&format!("{}.api_base", profile))?;
-        let client_id = cfg.get_string(&format!("{}.client_id", profile))?;
-        let cred_dir_raw = cfg.get_string(&format!("{}.credentials_dir", profile))?;
+        let api_base = cfg.get_string(&format!("{profile}.api_base"))?;
+        let client_id = cfg.get_string(&format!("{profile}.client_id"))?;
+        let cred_dir_raw = cfg.get_string(&format!("{profile}.credentials_dir"))?;
 
         // 6) Expand leading '~' if present
-        let credentials_dir = if cred_dir_raw.starts_with("~/") {
+        let credentials_dir = if let Some(path_without_tilde) = cred_dir_raw.strip_prefix("~/") {
             let mut home = home_dir().ok_or_else(|| {
                 ConfigError::Message("Cannot expand '~' in credentials_dir".into())
             })?;
-            home.push(&cred_dir_raw[2..]);
+            home.push(path_without_tilde);
             home
         } else {
             PathBuf::from(cred_dir_raw)
         };
 
         // 7) Optional global default project
-        let default_project = match cfg.get_string(&format!("{}.default_project", profile)) {
+        let default_project = match cfg.get_string(&format!("{profile}.default_project")) {
             Ok(s) if !s.is_empty() => Some(s),
             _ => None,
         };
@@ -70,7 +70,7 @@ impl Settings {
         // Create the directory if it doesn't exist
         if let Some(parent) = config_path.parent() {
             fs::create_dir_all(parent).map_err(|e| {
-                ConfigError::Message(format!("Failed to create config directory: {}", e))
+                ConfigError::Message(format!("Failed to create config directory: {e}"))
             })?;
         }
 
@@ -83,7 +83,7 @@ credentials_dir = "~/.accomplish"
 
         // Write the default configuration
         fs::write(config_path, default_config).map_err(|e| {
-            ConfigError::Message(format!("Failed to create default config file: {}", e))
+            ConfigError::Message(format!("Failed to create default config file: {e}"))
         })?;
 
         Ok(())

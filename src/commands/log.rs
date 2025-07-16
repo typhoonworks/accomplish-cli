@@ -26,7 +26,7 @@ fn convert_urls_to_markdown(text: &str) -> String {
                 url.to_string()
             } else {
                 // Convert to markdown link
-                format!("[{}]({})", url, url)
+                format!("[{url}]({url})")
             }
         })
         .to_string()
@@ -59,8 +59,7 @@ pub async fn execute(
 
         if project_id.is_none() {
             println!(
-                "⚠️ Warning: No project found with identifier '{}'",
-                identifier
+                "⚠️ Warning: No project found with identifier '{identifier}'"
             );
         }
 
@@ -80,13 +79,13 @@ pub async fn execute(
     .map_err(AppError::Api)?;
 
     if let Some(id) = resp.get("id").and_then(|v| v.as_str()) {
-        println!("✅ Created entry with id {}", id);
+        println!("✅ Created entry with id {id}");
         if !tags.is_empty() {
             println!("Tags: {}", tags.join(", "));
         }
         if let Some(identifier) = project_identifier {
             if let Some((name, uppercase_identifier)) = project_info {
-                println!("Project: {} ({})", name, uppercase_identifier);
+                println!("Project: {name} ({uppercase_identifier})");
             } else {
                 println!("Project: {}", identifier.to_uppercase());
             }

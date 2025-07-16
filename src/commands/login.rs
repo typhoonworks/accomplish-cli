@@ -10,7 +10,7 @@ pub async fn execute(auth_service: &mut AuthService, client_id: &str) -> Result<
     let (tx, rx) = oneshot::channel();
     tokio::spawn(async move {
         if let Err(e) = callback_server::start_callback_server(tx).await {
-            eprintln!("Callback server error: {}", e);
+            eprintln!("Callback server error: {e}");
         }
     });
 

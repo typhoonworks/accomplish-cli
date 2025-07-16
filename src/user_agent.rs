@@ -7,7 +7,7 @@ pub fn generate_user_agent() -> String {
     let os = get_os_name();
     let arch = get_arch_name();
 
-    format!("accomplish-cli/{} ({}; {})", version, os, arch)
+    format!("accomplish-cli/{version} ({os}; {arch})")
 }
 
 /// Get normalized OS name for User-Agent
@@ -50,7 +50,7 @@ mod tests {
         assert!(user_agent.contains(";"));
 
         // Print the actual user agent for verification
-        println!("Generated User-Agent: {}", user_agent);
+        println!("Generated User-Agent: {user_agent}");
     }
 
     #[test]

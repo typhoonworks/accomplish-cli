@@ -52,7 +52,7 @@ pub async fn execute(
 ) -> Result<(), AppError> {
     // Check if current directory is a git repository
     let current_dir = env::current_dir()
-        .map_err(|e| AppError::ParseError(format!("Failed to get current directory: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to get current directory: {e}")))?;
 
     if !is_git_repository(&current_dir) {
         return Err(AppError::Other(
@@ -102,7 +102,7 @@ pub async fn execute(
     let selected_options = MultiSelect::new("Select commits to capture:", options.clone())
         .with_help_message("Use space to select, arrow keys to navigate, enter to confirm")
         .prompt()
-        .map_err(|e| AppError::ParseError(format!("Selection failed: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Selection failed: {e}")))?;
 
     if selected_options.is_empty() {
         println!("No commits selected.");
@@ -140,7 +140,7 @@ pub async fn execute(
     let create_worklog = Confirm::new("Create worklog entry from selected commits?")
         .with_default(true)
         .prompt()
-        .map_err(|e| AppError::ParseError(format!("Confirmation failed: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Confirmation failed: {e}")))?;
 
     if create_worklog {
         // Extract commit IDs from the API response
@@ -177,32 +177,30 @@ fn is_git_repository(dir: &Path) -> bool {
 /// Gets recent commits from the git repository
 fn get_recent_commits(dir: &Path, limit: u32) -> Result<Vec<GitCommit>, AppError> {
     let repo = Repository::open(dir)
-        .map_err(|e| AppError::ParseError(format!("Failed to open git repository: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to open git repository: {e}")))?;
 
     let mut revwalk = repo
         .revwalk()
-        .map_err(|e| AppError::ParseError(format!("Failed to create revision walker: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to create revision walker: {e}")))?;
 
     revwalk
         .push_head()
-        .map_err(|e| AppError::ParseError(format!("Failed to push HEAD: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to push HEAD: {e}")))?;
 
     let mut commits = Vec::new();
-    let mut count = 0;
 
-    for oid in revwalk {
-        if count >= limit {
+    for (count, oid) in revwalk.enumerate() {
+        if count >= limit as usize {
             break;
         }
 
         let oid =
-            oid.map_err(|e| AppError::ParseError(format!("Failed to get commit OID: {}", e)))?;
+            oid.map_err(|e| AppError::ParseError(format!("Failed to get commit OID: {e}")))?;
         let commit = repo
             .find_commit(oid)
-            .map_err(|e| AppError::ParseError(format!("Failed to find commit: {}", e)))?;
+            .map_err(|e| AppError::ParseError(format!("Failed to find commit: {e}")))?;
 
         commits.push(GitCommit::from_git2_commit(&commit)?);
-        count += 1;
     }
 
     Ok(commits)
@@ -234,7 +232,7 @@ async fn get_repository_id_for_project(
                 == Some(project_identifier.to_lowercase())
         })
         .ok_or_else(|| {
-            AppError::ParseError(format!("Project '{}' not found", project_identifier))
+            AppError::ParseError(format!("Project '{project_identifier}' not found"))
         })?;
 
     let project_id = target_project
@@ -260,8 +258,7 @@ async fn get_repository_id_for_project(
 
     if project_repos.is_empty() {
         return Err(AppError::ParseError(format!(
-            "No repositories found for project '{}'",
-            project_identifier
+            "No repositories found for project '{project_identifier}'"
         )));
     }
 
@@ -400,8 +397,7 @@ async fn create_worklog_entry_from_commits(
              # Lines starting with # will be ignored\n\
              # Pre-filled with commit messages from selected commits:\n\
              #\n\
-             {}\n",
-            prefilled_content
+             {prefilled_content}\n"
         );
 
         match crate::utils::editor::open_in_editor(Some(&template)) {
@@ -414,7 +410,7 @@ async fn create_worklog_entry_from_commits(
                 vec![content]
             }
             Err(e) => {
-                return Err(AppError::Other(format!("Editor error: {}", e)));
+                return Err(AppError::Other(format!("Editor error: {e}")));
             }
         }
     } else {

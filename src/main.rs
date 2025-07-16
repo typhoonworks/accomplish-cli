@@ -36,7 +36,7 @@ async fn main() -> Result<(), AppError> {
         Commands::Version => {
             const VERSION: &str = env!("CARGO_PKG_VERSION");
             const NAME: &str = env!("CARGO_PKG_NAME");
-            println!("{} {}", NAME, VERSION);
+            println!("{NAME} {VERSION}");
         }
         Commands::Login => {
             if let Err(e) = login::execute(&mut auth_service, &settings.client_id).await {
@@ -64,17 +64,17 @@ async fn main() -> Result<(), AppError> {
                             "Restart `accomplish login` to get a new code".to_string(),
                         ),
                         other => (
-                            format!("Authentication error: {}", other),
+                            format!("Authentication error: {other}"),
                             "See API docs for error codes".to_string(),
                         ),
                     };
 
                     eprintln!();
-                    eprintln!("error: {}", msg);
-                    eprintln!("hint: {}", hint);
+                    eprintln!("error: {msg}");
+                    eprintln!("hint: {hint}");
                 } else {
                     eprintln!();
-                    eprintln!("error: {}", e);
+                    eprintln!("error: {e}");
                 }
                 process::exit(1);
             }
@@ -94,13 +94,13 @@ async fn main() -> Result<(), AppError> {
                     process::exit(1);
                 } else {
                     eprintln!();
-                    eprintln!("error: {}", e);
+                    eprintln!("error: {e}");
                     process::exit(1);
                 }
             }
 
             if let Err(e) = capture::execute(&mut auth_service, limit, edit).await {
-                eprintln!("\nerror: {}", e);
+                eprintln!("\nerror: {e}");
                 process::exit(1);
             }
         }
@@ -112,13 +112,13 @@ async fn main() -> Result<(), AppError> {
                     process::exit(1);
                 } else {
                     eprintln!();
-                    eprintln!("error: {}", e);
+                    eprintln!("error: {e}");
                     process::exit(1);
                 }
             }
 
             if let Err(e) = init::execute(&mut auth_service).await {
-                eprintln!("\nerror: {}", e);
+                eprintln!("\nerror: {e}");
                 process::exit(1);
             }
         }
@@ -135,7 +135,7 @@ async fn main() -> Result<(), AppError> {
                     process::exit(1);
                 } else {
                     eprintln!();
-                    eprintln!("error: {}", e);
+                    eprintln!("error: {e}");
                     process::exit(1);
                 }
             }
@@ -158,7 +158,7 @@ async fn main() -> Result<(), AppError> {
                         vec![content]
                     }
                     Err(e) => {
-                        eprintln!("\nerror: {}", e);
+                        eprintln!("\nerror: {e}");
                         process::exit(1);
                     }
                 }
@@ -179,7 +179,7 @@ async fn main() -> Result<(), AppError> {
             .await
             .map(|_| ())
             {
-                eprintln!("\nerror: {}", e);
+                eprintln!("\nerror: {e}");
                 process::exit(1);
             }
         }
@@ -191,7 +191,7 @@ async fn main() -> Result<(), AppError> {
                     process::exit(1);
                 } else {
                     eprintln!();
-                    eprintln!("error: {}", e);
+                    eprintln!("error: {e}");
                     process::exit(1);
                 }
             }
@@ -199,7 +199,7 @@ async fn main() -> Result<(), AppError> {
             match command {
                 ProjectCommands::List => {
                     if let Err(e) = project::list(&mut auth_service).await {
-                        eprintln!("\nerror: {}", e);
+                        eprintln!("\nerror: {e}");
                         process::exit(1);
                     }
                 }
@@ -208,7 +208,7 @@ async fn main() -> Result<(), AppError> {
                         config::lookup_default_project_for_dir(&env::current_dir().unwrap())
                     });
                     match default {
-                        Some(id) => println!("{}", id),
+                        Some(id) => println!("{id}"),
                         None => println!("(no default project configured)"),
                     }
                 }
@@ -225,7 +225,7 @@ async fn main() -> Result<(), AppError> {
                     )
                     .await
                     {
-                        eprintln!("\nerror: {}", e);
+                        eprintln!("\nerror: {e}");
                         process::exit(1);
                     }
                 }
@@ -247,7 +247,7 @@ async fn main() -> Result<(), AppError> {
                     process::exit(1);
                 } else {
                     eprintln!();
-                    eprintln!("error: {}", e);
+                    eprintln!("error: {e}");
                     process::exit(1);
                 }
             }
@@ -284,7 +284,7 @@ async fn main() -> Result<(), AppError> {
             )
             .await
             {
-                eprintln!("\nerror: {}", e);
+                eprintln!("\nerror: {e}");
                 process::exit(1);
             }
         }

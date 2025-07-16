@@ -37,7 +37,7 @@ pub async fn list(auth_service: &mut AuthService) -> Result<(), AppError> {
 
     let table = Table::new(table_data).with(Style::modern()).to_string();
 
-    println!("{}", table);
+    println!("{table}");
     Ok(())
 }
 
@@ -56,7 +56,7 @@ pub async fn get_projects(auth_service: &mut AuthService) -> Result<Vec<Project>
         .map_err(AppError::Api)?;
 
     let projects_response: ProjectsResponse = serde_json::from_value(response)
-        .map_err(|e| AppError::ParseError(format!("Failed to parse projects response: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to parse projects response: {e}")))?;
 
     Ok(projects_response.projects)
 }
@@ -112,8 +112,7 @@ pub async fn create_project(
         .unwrap_or("Unknown");
 
     println!(
-        "✓ Project '{}' created successfully with identifier '{}'",
-        project_name, project_id
+        "✓ Project '{project_name}' created successfully with identifier '{project_id}'"
     );
 
     Ok(())

@@ -9,7 +9,7 @@ use std::path::Path;
 
 pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
     let current_dir = std::env::current_dir()
-        .map_err(|e| AppError::ParseError(format!("Failed to get current directory: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to get current directory: {e}")))?;
 
     // Check if directory is already initialized locally
     let accomplish_config_path = current_dir.join(".accomplish.toml");
@@ -21,15 +21,14 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
     if has_local_config || is_tracked_globally {
         let config_type = if has_local_config { "local" } else { "global" };
         println!(
-            "Directory is already initialized with a project ({} config).",
-            config_type
+            "Directory is already initialized with a project ({config_type} config)."
         );
 
         let proceed = Confirm::new("Do you want to reinitialize this directory?")
             .with_help_message("This will replace the existing configuration")
             .with_default(false)
             .prompt()
-            .map_err(|e| AppError::ParseError(format!("Confirmation failed: {}", e)))?;
+            .map_err(|e| AppError::ParseError(format!("Confirmation failed: {e}")))?;
 
         if !proceed {
             println!("Operation cancelled.");
@@ -45,7 +44,7 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
         "folder"
     };
 
-    println!("Initializing {} in: {}", repo_type, current_dir.display());
+    println!("Initializing {repo_type} in: {}", current_dir.display());
 
     // Fetch available projects
     let projects = get_projects(auth_service).await?;
@@ -69,7 +68,7 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
     )
     .with_help_message("Use arrow keys to navigate, Enter to select")
     .prompt()
-    .map_err(|e| AppError::ParseError(format!("Selection failed: {}", e)))?;
+    .map_err(|e| AppError::ParseError(format!("Selection failed: {e}")))?;
 
     // Handle cancellation
     if selected == "Cancel" {
@@ -117,8 +116,7 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
                 }
                 Err(e) => {
                     eprintln!(
-                        "⚠️  Warning: Could not check for existing repositories: {}",
-                        e
+                        "⚠️  Warning: Could not check for existing repositories: {e}"
                     );
                 }
             }
@@ -128,10 +126,10 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
             // Repository already exists
             println!("✓ Repository already exists in project");
             if let Some(repo_name) = repo.get("name").and_then(|v| v.as_str()) {
-                println!("  Repository name: {}", repo_name);
+                println!("  Repository name: {repo_name}");
             }
             if let Some(repo_id) = repo.get("id").and_then(|v| v.as_str()) {
-                println!("  Repository ID: {}", repo_id);
+                println!("  Repository ID: {repo_id}");
             }
         } else {
             // Create new repository
@@ -140,7 +138,7 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
                 .with_default(&default_repo_name)
                 .with_help_message("This will be the name of the repository in Accomplish")
                 .prompt()
-                .map_err(|e| AppError::ParseError(format!("Input failed: {}", e)))?;
+                .map_err(|e| AppError::ParseError(format!("Input failed: {e}")))?;
 
             let local_path = current_dir.to_string_lossy().to_string();
 
@@ -155,13 +153,13 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
             .await
             {
                 Ok(repo_response) => {
-                    println!("✓ Repository '{}' created successfully", repo_name);
+                    println!("✓ Repository '{repo_name}' created successfully");
                     if let Some(repo_id) = repo_response.get("id").and_then(|v| v.as_str()) {
-                        println!("  Repository ID: {}", repo_id);
+                        println!("  Repository ID: {repo_id}");
                     }
                 }
                 Err(e) => {
-                    eprintln!("⚠️  Warning: Failed to create repository: {}", e);
+                    eprintln!("⚠️  Warning: Failed to create repository: {e}");
                     eprintln!("   Project will still be configured locally/globally");
                 }
             }
@@ -174,14 +172,14 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
             .with_help_message("Local: adds .accomplish.toml to repo (remember to add to .gitignore)\nGlobal: stores in ~/.accomplish/directories.toml")
             .with_default(false)
             .prompt()
-            .map_err(|e| AppError::ParseError(format!("Confirmation failed: {}", e)))?
+            .map_err(|e| AppError::ParseError(format!("Confirmation failed: {e}")))?
     } else {
         // For non-git folders, default to local but still give option
         Confirm::new("Store configuration locally in .accomplish.toml? (No = store globally)")
             .with_help_message("Local: creates .accomplish.toml in this folder\nGlobal: stores in ~/.accomplish/directories.toml")
             .with_default(true)
             .prompt()
-            .map_err(|e| AppError::ParseError(format!("Confirmation failed: {}", e)))?
+            .map_err(|e| AppError::ParseError(format!("Confirmation failed: {e}")))?
     };
 
     // Clean up existing configuration before creating new one
@@ -251,7 +249,7 @@ type = "folder"
     };
 
     fs::write(&config_path, config_content)
-        .map_err(|e| AppError::ParseError(format!("Failed to write local config file: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to write local config file: {e}")))?;
 
     Ok(())
 }
@@ -263,7 +261,7 @@ fn create_global_config(dir: &Path, project: &Project, is_git_repo: bool) -> Res
     let accomplish_dir = home.join(".accomplish");
     if !accomplish_dir.exists() {
         fs::create_dir_all(&accomplish_dir).map_err(|e| {
-            AppError::ParseError(format!("Failed to create .accomplish directory: {}", e))
+            AppError::ParseError(format!("Failed to create .accomplish directory: {e}"))
         })?;
     }
 
@@ -272,9 +270,9 @@ fn create_global_config(dir: &Path, project: &Project, is_git_repo: bool) -> Res
     // Load existing config or create new one
     let mut config = if global_config_path.exists() {
         let content = fs::read_to_string(&global_config_path)
-            .map_err(|e| AppError::ParseError(format!("Failed to read global config: {}", e)))?;
+            .map_err(|e| AppError::ParseError(format!("Failed to read global config: {e}")))?;
         toml::from_str(&content)
-            .map_err(|e| AppError::ParseError(format!("Failed to parse global config: {}", e)))?
+            .map_err(|e| AppError::ParseError(format!("Failed to parse global config: {e}")))?
     } else {
         GlobalConfig::default()
     };
@@ -299,10 +297,10 @@ fn create_global_config(dir: &Path, project: &Project, is_git_repo: bool) -> Res
 
     // Write updated config
     let config_content = toml::to_string_pretty(&config)
-        .map_err(|e| AppError::ParseError(format!("Failed to serialize global config: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to serialize global config: {e}")))?;
 
     fs::write(&global_config_path, config_content)
-        .map_err(|e| AppError::ParseError(format!("Failed to write global config file: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to write global config file: {e}")))?;
 
     Ok(())
 }
@@ -317,10 +315,10 @@ fn is_globally_tracked(dir: &Path) -> Result<bool, AppError> {
     }
 
     let content = fs::read_to_string(&global_config_path)
-        .map_err(|e| AppError::ParseError(format!("Failed to read global config: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to read global config: {e}")))?;
 
     let config: GlobalConfig = toml::from_str(&content)
-        .map_err(|e| AppError::ParseError(format!("Failed to parse global config: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to parse global config: {e}")))?;
 
     let dir_key = dir.to_string_lossy().to_string();
     Ok(config.directories.contains_key(&dir_key))
@@ -382,8 +380,7 @@ fn derive_repo_name(dir: &Path, git_remote: Option<&str>) -> String {
 
 fn extract_repo_name_from_url(url: &str) -> Option<String> {
     // Handle GitHub/GitLab style URLs: https://github.com/user/repo.git or git@github.com:user/repo.git
-    if url.ends_with(".git") {
-        let without_git = &url[..url.len() - 4];
+    if let Some(without_git) = url.strip_suffix(".git") {
         if let Some(last_slash) = without_git.rfind('/') {
             let repo_part = &without_git[last_slash + 1..];
             if !repo_part.is_empty() {
@@ -409,7 +406,7 @@ fn cleanup_existing_config(dir: &Path, has_local: bool, has_global: bool) -> Res
         let local_config_path = dir.join(".accomplish.toml");
         if local_config_path.exists() {
             fs::remove_file(&local_config_path).map_err(|e| {
-                AppError::ParseError(format!("Failed to remove local config: {}", e))
+                AppError::ParseError(format!("Failed to remove local config: {e}"))
             })?;
         }
     }
@@ -431,19 +428,19 @@ fn remove_from_global_config(dir: &Path) -> Result<(), AppError> {
     }
 
     let content = fs::read_to_string(&global_config_path)
-        .map_err(|e| AppError::ParseError(format!("Failed to read global config: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to read global config: {e}")))?;
 
     let mut config: GlobalConfig = toml::from_str(&content)
-        .map_err(|e| AppError::ParseError(format!("Failed to parse global config: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to parse global config: {e}")))?;
 
     let dir_key = dir.to_string_lossy().to_string();
     config.directories.remove(&dir_key);
 
     let config_content = toml::to_string_pretty(&config)
-        .map_err(|e| AppError::ParseError(format!("Failed to serialize global config: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to serialize global config: {e}")))?;
 
     fs::write(&global_config_path, config_content)
-        .map_err(|e| AppError::ParseError(format!("Failed to write global config file: {}", e)))?;
+        .map_err(|e| AppError::ParseError(format!("Failed to write global config file: {e}")))?;
 
     Ok(())
 }
