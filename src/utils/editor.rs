@@ -48,18 +48,17 @@ pub fn open_in_editor(initial_content: Option<&str>) -> Result<String, AppError>
             .arg("--wait")
             .arg(&file_path)
             .status()
-            .map_err(|e| AppError::Other(format!("Failed to open editor '{}': {}", editor, e)))?
+            .map_err(|e| AppError::Other(format!("Failed to open editor '{editor}': {e}")))?
     } else {
         Command::new(&editor)
             .arg(&file_path)
             .status()
-            .map_err(|e| AppError::Other(format!("Failed to open editor '{}': {}", editor, e)))?
+            .map_err(|e| AppError::Other(format!("Failed to open editor '{editor}': {e}")))?
     };
 
     if !status.success() {
         return Err(AppError::Other(format!(
-            "Editor '{}' exited with non-zero status",
-            editor
+            "Editor '{editor}' exited with non-zero status"
         )));
     }
 
@@ -68,7 +67,7 @@ pub fn open_in_editor(initial_content: Option<&str>) -> Result<String, AppError>
 
     // Clean up the temporary file
     if let Err(e) = fs::remove_file(&file_path) {
-        eprintln!("Warning: Failed to remove temporary file: {}", e);
+        eprintln!("Warning: Failed to remove temporary file: {e}");
     }
 
     // Filter out comment lines (lines starting with #)

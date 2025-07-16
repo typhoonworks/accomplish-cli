@@ -18,8 +18,7 @@ const CLI_SCOPES: &str = concat!(
 fn format_date_for_api(date_str: &str, is_end_of_day: bool) -> Result<String, ApiError> {
     let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").map_err(|_| {
         ApiError::InvalidInput(format!(
-            "Invalid date format: {}. Expected YYYY-MM-DD",
-            date_str
+            "Invalid date format: {date_str}. Expected YYYY-MM-DD"
         ))
     })?;
 
@@ -113,7 +112,7 @@ pub async fn associate_commits_with_entry(
         "commit_ids": commit_ids
     });
 
-    let endpoint = format!("api/v1/worklog/entries/{}/commits", entry_id);
+    let endpoint = format!("api/v1/worklog/entries/{entry_id}/commits");
     api_client.post(&endpoint, body, true).await
 }
 
@@ -196,8 +195,7 @@ pub async fn fetch_uncaptured_commits(
 ) -> Result<Value, ApiError> {
     let shas_param = commit_shas.join(",");
     let endpoint = format!(
-        "api/v1/repositories/{}/commits?uncaptured=true&shas={}",
-        repo_id, shas_param
+        "api/v1/repositories/{repo_id}/commits?uncaptured=true&shas={shas_param}"
     );
     api_client.get(&endpoint, true).await
 }
@@ -212,7 +210,7 @@ pub async fn create_commits(
         "commits": commits
     });
 
-    let endpoint = format!("api/v1/repositories/{}/commits", repo_id);
+    let endpoint = format!("api/v1/repositories/{repo_id}/commits");
     api_client.post(&endpoint, body, true).await
 }
 
@@ -237,7 +235,7 @@ pub async fn fetch_worklog_entries(
     let mut params = vec![format!("limit={}", limit)];
 
     if let Some(project) = project_id {
-        params.push(format!("project_id={}", project));
+        params.push(format!("project_id={project}"));
     }
 
     if let Some(tags_list) = tags {
@@ -248,16 +246,16 @@ pub async fn fetch_worklog_entries(
 
     if let Some(from_date) = from {
         let formatted_date = format_date_for_api(from_date, false)?;
-        params.push(format!("from={}", formatted_date));
+        params.push(format!("from={formatted_date}"));
     }
 
     if let Some(to_date) = to {
         let formatted_date = format_date_for_api(to_date, true)?;
-        params.push(format!("to={}", formatted_date));
+        params.push(format!("to={formatted_date}"));
     }
 
     if let Some(cursor) = starting_after {
-        params.push(format!("starting_after={}", cursor));
+        params.push(format!("starting_after={cursor}"));
     }
 
     let query = if params.is_empty() {
@@ -266,7 +264,7 @@ pub async fn fetch_worklog_entries(
         format!("?{}", params.join("&"))
     };
 
-    let endpoint = format!("api/v1/worklog/entries{}", query);
+    let endpoint = format!("api/v1/worklog/entries{query}");
     api_client.get(&endpoint, true).await
 }
 
@@ -503,7 +501,7 @@ mod tests {
     #[tokio::test]
     async fn test_create_worklog_entry_with_comma_separated_tags() {
         // This simulates what happens when the CLI parses the command line arguments
-        let tags_input = vec!["rust, cli".to_string()];
+        let tags_input = ["rust, cli".to_string()];
 
         // After processing, we expect the tags to be split and trimmed
         let processed_tags: Vec<String> = tags_input
@@ -979,7 +977,7 @@ mod tests {
             .await
             .expect("Expected Ok");
 
-        assert_eq!(resp.active, true);
+        assert!(resp.active);
         assert_eq!(resp.client_id, "cli-client");
         assert_eq!(resp.username, Some("testuser".to_string()));
         assert_eq!(resp.scope, "user:read user:write project:read project:write worklog:read worklog:write repo:read repo:write");
@@ -1089,7 +1087,7 @@ mod tests {
 
         let _m = mock(
             "GET",
-            format!("/api/v1/worklog/entries?{}", expected_params).as_str(),
+            format!("/api/v1/worklog/entries?{expected_params}").as_str(),
         )
         .match_header("authorization", Matcher::Any)
         .with_status(200)

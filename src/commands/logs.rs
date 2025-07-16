@@ -32,8 +32,7 @@ pub async fn execute(
 
         if found_id.is_none() {
             println!(
-                "⚠️ Warning: No project found with identifier '{}'",
-                identifier
+                "⚠️ Warning: No project found with identifier '{identifier}'"
             );
         }
 
@@ -101,6 +100,7 @@ pub async fn execute(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn interactive_pagination(
     auth_service: &mut AuthService,
     project_id: Option<&str>,
@@ -125,13 +125,13 @@ async fn interactive_pagination(
 
         // Enable raw mode for single key input
         enable_raw_mode()
-            .map_err(|e| AppError::Other(format!("Failed to enable raw mode: {}", e)))?;
+            .map_err(|e| AppError::Other(format!("Failed to enable raw mode: {e}")))?;
 
         let key_result = read();
 
         // Always disable raw mode before continuing
         disable_raw_mode()
-            .map_err(|e| AppError::Other(format!("Failed to disable raw mode: {}", e)))?;
+            .map_err(|e| AppError::Other(format!("Failed to disable raw mode: {e}")))?;
 
         match key_result {
             Ok(Event::Key(KeyEvent { code, .. })) => {
@@ -195,7 +195,7 @@ async fn interactive_pagination(
             }
             Ok(_) => continue,
             Err(e) => {
-                return Err(AppError::Other(format!("Error reading key: {}", e)));
+                return Err(AppError::Other(format!("Error reading key: {e}")));
             }
         }
     }
@@ -238,7 +238,7 @@ fn print_entry(entry: &Value, verbose: bool) -> Result<(), AppError> {
         .get("project")
         .and_then(|p| p.get("identifier"))
         .and_then(Value::as_str)
-        .map(|id| format!(" [{}]", id))
+        .map(|id| format!(" [{id}]"))
         .unwrap_or_default();
 
     // Format the header with colors
@@ -250,7 +250,7 @@ fn print_entry(entry: &Value, verbose: bool) -> Result<(), AppError> {
     );
 
     // Print the entry
-    println!("{}", header);
+    println!("{header}");
 
     if verbose {
         // In verbose mode, show full content

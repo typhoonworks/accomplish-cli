@@ -1,6 +1,6 @@
 [package]
 name = "accomplish-cli"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 description = "A command-line tool for interacting with the Accomplish platform to log work entries and manage projects."
 authors = ["Rui Freitas <rodloboz@heycom>"]

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-01-16
+
+### Changed
+- **BREAKING**: Renamed internal `auth` module to `auth_service` to resolve module naming conflicts
+- Comprehensive code quality improvements based on strict Clippy linting rules
+- Updated all format strings to use inline variable syntax for better readability and performance
+- Replaced manual string manipulation with idiomatic Rust methods (`strip_prefix`, `strip_suffix`)
+- Improved loop patterns using `enumerate()` instead of manual counters
+- Enhanced test assertions to use more appropriate comparison methods
+
+### Fixed
+- Fixed over 100 Clippy warnings and errors across the entire codebase
+- Resolved module inception issues in the authentication module structure
+- Corrected inefficient vector allocations in tests
+
 ## [0.1.2] - 2025-01-16
 
 ### Fixed
@@ -39,7 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Migrated from version 0.2.0 to 0.1.0 following SemVer conventions for pre-release software
 
-[Unreleased]: https://github.com/typhoonworks/accomplish/compare/cli-v0.1.2...HEAD
+[Unreleased]: https://github.com/typhoonworks/accomplish-cli/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/typhoonworks/accomplish-cli/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/typhoonworks/accomplish/compare/cli-v0.1.1...cli-v0.1.2
 [0.1.1]: https://github.com/typhoonworks/accomplish/compare/cli-v0.1.0...cli-v0.1.1
 [0.1.0]: https://github.com/typhoonworks/accomplish/releases/tag/cli-v0.1.0
