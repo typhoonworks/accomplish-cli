@@ -1,6 +1,6 @@
 # Accomplish CLI
 
-The Accomplish CLI (`acc`) is a command-line tool for interacting with the [Accomplish](https://accomplish.app) platform. It allows you to log work entries, manage projects, and track your productivity directly from your terminal.
+The Accomplish CLI (`acc`) is a command-line tool for interacting with the [Accomplish](https://accomplish.dev) platform. It allows you to log work entries, manage projects, and track your productivity directly from your terminal.
 
 ## Features
 

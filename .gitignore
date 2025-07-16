@@ -47,3 +47,6 @@ temp/
 # Test artifacts
 *.test
 *.out
+
+# Accomplish
+.accomplish.toml
