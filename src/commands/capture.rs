@@ -231,9 +231,7 @@ async fn get_repository_id_for_project(
                 .map(|s| s.to_lowercase())
                 == Some(project_identifier.to_lowercase())
         })
-        .ok_or_else(|| {
-            AppError::ParseError(format!("Project '{project_identifier}' not found"))
-        })?;
+        .ok_or_else(|| AppError::ParseError(format!("Project '{project_identifier}' not found")))?;
 
     let project_id = target_project
         .get("id")

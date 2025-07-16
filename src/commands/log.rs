@@ -58,9 +58,7 @@ pub async fn execute(
         }
 
         if project_id.is_none() {
-            println!(
-                "⚠️ Warning: No project found with identifier '{identifier}'"
-            );
+            println!("⚠️ Warning: No project found with identifier '{identifier}'");
         }
 
         (project_id, project_info)

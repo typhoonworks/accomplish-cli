@@ -20,9 +20,7 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
 
     if has_local_config || is_tracked_globally {
         let config_type = if has_local_config { "local" } else { "global" };
-        println!(
-            "Directory is already initialized with a project ({config_type} config)."
-        );
+        println!("Directory is already initialized with a project ({config_type} config).");
 
         let proceed = Confirm::new("Do you want to reinitialize this directory?")
             .with_help_message("This will replace the existing configuration")
@@ -115,9 +113,7 @@ pub async fn execute(auth_service: &mut AuthService) -> Result<(), AppError> {
                     }
                 }
                 Err(e) => {
-                    eprintln!(
-                        "⚠️  Warning: Could not check for existing repositories: {e}"
-                    );
+                    eprintln!("⚠️  Warning: Could not check for existing repositories: {e}");
                 }
             }
         }
@@ -405,9 +401,8 @@ fn cleanup_existing_config(dir: &Path, has_local: bool, has_global: bool) -> Res
     if has_local {
         let local_config_path = dir.join(".accomplish.toml");
         if local_config_path.exists() {
-            fs::remove_file(&local_config_path).map_err(|e| {
-                AppError::ParseError(format!("Failed to remove local config: {e}"))
-            })?;
+            fs::remove_file(&local_config_path)
+                .map_err(|e| AppError::ParseError(format!("Failed to remove local config: {e}")))?;
         }
     }
 
