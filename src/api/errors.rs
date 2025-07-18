@@ -9,6 +9,7 @@ pub enum ApiError {
     Unexpected(String),
     DecodeError(String),
     InvalidInput(String),
+    RateLimited,
 }
 
 impl fmt::Display for ApiError {
@@ -21,6 +22,12 @@ impl fmt::Display for ApiError {
             ApiError::Unexpected(msg) => write!(f, "Unexpected Error: {msg}"),
             ApiError::DecodeError(msg) => write!(f, "Decoding Error: {msg}"),
             ApiError::InvalidInput(msg) => write!(f, "Invalid Input: {msg}"),
+            ApiError::RateLimited => {
+                write!(
+                    f,
+                    "Consider spacing out your requests to avoid hitting the rate limit"
+                )
+            }
         }
     }
 }
