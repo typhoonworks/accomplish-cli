@@ -89,6 +89,7 @@ impl ApiClient {
                         .unwrap_or_else(|_| "Unprocessable Entity".to_string());
                     Err(ApiError::InvalidInput(error_msg))
                 }
+                429 => Err(ApiError::RateLimited),
                 500 => {
                     let error_msg = resp
                         .text()
@@ -167,6 +168,7 @@ impl ApiClient {
                         .unwrap_or_else(|_| "Unprocessable Entity".to_string());
                     Err(ApiError::InvalidInput(error_msg))
                 }
+                429 => Err(ApiError::RateLimited),
                 500 => {
                     let error_msg = resp
                         .text()

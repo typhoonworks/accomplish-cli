@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-07-18
+
+### Added
+- Rate limiting support for API requests (HTTP 429 responses)
+- User-friendly error message when rate limits are exceeded: "Consider spacing out your requests to avoid hitting the rate limit"
+
 ## [0.2.0] - 2025-01-16
 
 ### Changed
