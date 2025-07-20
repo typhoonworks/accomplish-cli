@@ -115,6 +115,10 @@ pub enum Commands {
         #[arg(short = 't', long = "tags", value_delimiter = ' ')]
         tags: Option<Vec<String>>,
 
+        /// Exclude entries that have any of these tags
+        #[arg(short = 'x', long = "exclude-tags", value_delimiter = ' ')]
+        exclude_tags: Option<Vec<String>>,
+
         /// Filter by project identifier (3-letter code)
         #[arg(short = 'p', long = "project")]
         project: Option<String>,

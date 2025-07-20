@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- New `acc recap` command for generating AI-powered worklog summaries
+- New `acc recap` command for generating AI-powered worklog summaries with real-time progress updates via SSE streaming
+- Server-Sent Events (SSE) support with automatic fallback to polling for robust recap generation
+- Exclude tags support for `acc recap` command with `-x, --exclude-tags` flag for filtering out entries with specific tags
+- Enhanced duration parsing with human-friendly expressions: `yesterday`, `today`, `this-week`, `last-week`, `this-month`, `last-month`
 - Dependabot configuration for automated dependency updates
 
 ## [0.3.0] - 2025-07-18

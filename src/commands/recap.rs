@@ -6,7 +6,10 @@ use crate::utils::duration::parse_since_duration;
 use crate::utils::spinner::Spinner;
 use chrono::{DateTime, Utc};
 use colored::*;
+use futures::StreamExt;
 use std::io::{self, Write};
+use tokio::time::{timeout, Duration};
+use url::Url;
 
 pub async fn execute(
     auth_service: &mut AuthService,
@@ -14,6 +17,7 @@ pub async fn execute(
     to: Option<&str>,
     since: Option<&str>,
     tags: Option<&[String]>,
+    exclude_tags: Option<&[String]>,
     project_identifier: Option<&str>,
 ) -> Result<(), AppError> {
     // Handle date filtering
@@ -70,6 +74,7 @@ pub async fn execute(
         to_date.as_deref(),
         since,
         tags,
+        exclude_tags,
         project_identifier,
     );
 
@@ -100,6 +105,7 @@ pub async fn execute(
         to_date_api.as_deref(),
         project_ids.as_deref(),
         tags,
+        exclude_tags,
     )
     .await
     .map_err(|e| match e {
@@ -150,12 +156,23 @@ pub async fn execute(
             }
         }
         "processing" => {
-            // For now, fall back to polling since SSE implementation is simplified
-            // Future enhancement: implement full SSE streaming
             println!("{}", "✨ Generating your recap...".bright_green());
 
             let recap_id = &recap_response.recap_id;
-            return poll_for_completion(api_client, recap_id).await;
+
+            // Try SSE first if available, otherwise fall back to polling
+            if let Some(sse_url) = &recap_response.sse_url {
+                match try_sse_completion(api_client, sse_url, recap_id).await {
+                    Ok(result) => return result,
+                    Err(_) => {
+                        // SSE failed, fall back to polling
+                        return poll_for_completion(api_client, recap_id).await;
+                    }
+                }
+            } else {
+                // No SSE URL provided, use polling
+                return poll_for_completion(api_client, recap_id).await;
+            }
         }
         _ => {
             return Err(AppError::Other(format!(
@@ -166,6 +183,165 @@ pub async fn execute(
     }
 
     Ok(())
+}
+
+async fn try_sse_completion(
+    api_client: &crate::api::client::ApiClient,
+    sse_url: &str,
+    recap_id: &str,
+) -> Result<Result<(), AppError>, AppError> {
+    // Extract the endpoint from the full SSE URL
+    // The sse_url comes as a full URL like "http://localhost:4000/api/v1/worklog/recaps/sse?recap_id=123"
+    // We need to extract the path portion for the API client
+    let endpoint = if let Ok(url) = Url::parse(sse_url) {
+        let path_and_query = if let Some(query) = url.query() {
+            format!("{}?{}", &url.path()[1..], query) // Remove leading slash and add query
+        } else {
+            url.path()[1..].to_string() // Remove leading slash
+        };
+        path_and_query
+    } else {
+        // If parsing fails, try to use as-is
+        sse_url.to_string()
+    };
+
+    // Try to establish SSE connection with timeout
+    let mut sse_stream =
+        match timeout(Duration::from_secs(5), api_client.stream_sse(&endpoint)).await {
+            Ok(Ok(stream)) => stream,
+            Ok(Err(e)) => {
+                // Handle specific error cases
+                return match e {
+                    crate::api::errors::ApiError::NotFound(_) => {
+                        // Stream not found - this is the case where recap completed too quickly
+                        // Fall back to polling to get the final result
+                        Err(e.into())
+                    }
+                    _ => Err(e.into()),
+                };
+            }
+            Err(_) => {
+                // Timeout - fall back to polling
+                return Err(AppError::Other("SSE connection timeout".to_string()));
+            }
+        };
+
+    use std::time::Instant;
+    let start_time = Instant::now();
+    let mut spinner_index = 0;
+    const SPINNER_CHARS: &[char] = &['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+    loop {
+        // Display spinner
+        let elapsed = start_time.elapsed();
+        let seconds = elapsed.as_secs();
+        let spinner_char = SPINNER_CHARS[spinner_index % SPINNER_CHARS.len()];
+
+        print!(
+            "\r{} {}... ({}s)",
+            spinner_char.to_string().bright_red(),
+            "Generating your recap".bright_red(),
+            seconds
+        );
+        io::stdout().flush().unwrap();
+
+        // Check for SSE events
+        match timeout(Duration::from_millis(100), sse_stream.next()).await {
+            Ok(Some(Ok(event))) => {
+                match event.status.as_str() {
+                    "completed" => {
+                        // Clear spinner
+                        print!("\r{}\r", " ".repeat(80));
+                        io::stdout().flush().unwrap();
+
+                        // Get the final content from the polling endpoint
+                        // Retry a couple times to ensure backend has fully populated metadata
+                        for attempt in 0..3 {
+                            if attempt > 0 {
+                                tokio::time::sleep(Duration::from_millis(500)).await;
+                            }
+
+                            match get_recap_status(api_client, recap_id).await {
+                                Ok(status_response) => {
+                                    if let Some(content) = status_response.content {
+                                        // Check if we have reasonable metadata, or if this is the last attempt
+                                        let has_metadata = status_response
+                                            .metadata
+                                            .as_ref()
+                                            .map(|m| m.entry_count > 0)
+                                            .unwrap_or(false);
+
+                                        if has_metadata || attempt == 2 {
+                                            print_recap_result(
+                                                &content,
+                                                &status_response.metadata,
+                                                &status_response.filters,
+                                            );
+                                            return Ok(Ok(()));
+                                        }
+                                        // If no metadata yet and not last attempt, continue retrying
+                                    } else {
+                                        return Ok(Err(AppError::Other(
+                                            "Recap completed but no content was returned"
+                                                .to_string(),
+                                        )));
+                                    }
+                                }
+                                Err(e) => {
+                                    if attempt == 2 {
+                                        return Ok(Err(AppError::Other(format!(
+                                            "Failed to fetch recap content: {e}"
+                                        ))));
+                                    }
+                                    // Continue retrying on non-final attempts
+                                }
+                            }
+                        }
+
+                        // This shouldn't be reached, but just in case
+                        return Ok(Err(AppError::Other(
+                            "Failed to get complete recap data after retries".to_string(),
+                        )));
+                    }
+                    "failed" => {
+                        print!("\r{}\r", " ".repeat(80));
+                        io::stdout().flush().unwrap();
+                        return Ok(Err(AppError::Other(
+                            "Recap generation failed. Please try again.".to_string(),
+                        )));
+                    }
+                    "processing" => {
+                        // Continue listening
+                    }
+                    _ => {
+                        print!("\r{}\r", " ".repeat(80));
+                        io::stdout().flush().unwrap();
+                        return Ok(Err(AppError::Other(format!(
+                            "Unexpected recap status: {}",
+                            event.status
+                        ))));
+                    }
+                }
+            }
+            Ok(Some(Err(e))) => {
+                // SSE stream error - fall back to polling
+                print!("\r{}\r", " ".repeat(80));
+                io::stdout().flush().unwrap();
+                return Err(AppError::Other(format!("SSE stream error: {e}")));
+            }
+            Ok(None) => {
+                // Stream ended unexpectedly - fall back to polling
+                print!("\r{}\r", " ".repeat(80));
+                io::stdout().flush().unwrap();
+                return Err(AppError::Other("SSE stream ended unexpectedly".to_string()));
+            }
+            Err(_) => {
+                // Timeout - continue with next spinner frame
+                spinner_index += 1;
+                tokio::time::sleep(Duration::from_millis(100)).await;
+            }
+        }
+    }
 }
 
 async fn poll_for_completion(
@@ -266,6 +442,7 @@ fn build_filter_description(
     to: Option<&str>,
     since: Option<&str>,
     tags: Option<&[String]>,
+    exclude_tags: Option<&[String]>,
     project: Option<&str>,
 ) -> String {
     let mut parts = Vec::new();
@@ -301,6 +478,12 @@ fn build_filter_description(
     if let Some(tag_list) = tags {
         if !tag_list.is_empty() {
             parts.push(format!("tagged with {}", tag_list.join(", ")));
+        }
+    }
+
+    if let Some(exclude_tag_list) = exclude_tags {
+        if !exclude_tag_list.is_empty() {
+            parts.push(format!("excluding tags {}", exclude_tag_list.join(", ")));
         }
     }
 

@@ -37,6 +37,8 @@ pub struct RecapResponse {
     pub status: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub poll_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sse_url: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -90,4 +92,17 @@ pub struct RecapMetadata {
     pub projects: Vec<String>,
     #[serde(default)]
     pub tags: Vec<String>,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[allow(dead_code)]
+pub struct SseEvent {
+    pub recap_id: String,
+    pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partial_content: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub progress: Option<u32>,
 }
