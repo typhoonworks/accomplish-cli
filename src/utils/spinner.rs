@@ -104,7 +104,7 @@ impl Spinner {
             seconds
         );
 
-        print!("{}", display);
+        print!("{display}");
         io::stdout().flush().unwrap();
     }
 

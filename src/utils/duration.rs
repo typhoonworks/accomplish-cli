@@ -12,7 +12,7 @@ use regex::Regex;
 /// - "1d12h30m" -> 1 day, 12 hours, and 30 minutes ago
 pub fn parse_since_duration(since: &str) -> Result<String, ApiError> {
     let regex = Regex::new(r"(\d+)([wdhm])")
-        .map_err(|e| ApiError::InvalidInput(format!("Failed to compile duration regex: {}", e)))?;
+        .map_err(|e| ApiError::InvalidInput(format!("Failed to compile duration regex: {e}")))?;
 
     let mut total_duration = Duration::zero();
     let mut found_match = false;
@@ -31,8 +31,7 @@ pub fn parse_since_duration(since: &str) -> Result<String, ApiError> {
             "m" => Duration::minutes(value),
             _ => {
                 return Err(ApiError::InvalidInput(format!(
-                    "Unsupported duration unit: {}",
-                    unit
+                    "Unsupported duration unit: {unit}"
                 )))
             }
         };
