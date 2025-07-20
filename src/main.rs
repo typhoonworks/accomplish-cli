@@ -300,6 +300,7 @@ async fn main() -> Result<(), AppError> {
             to,
             since,
             tags,
+            exclude_tags,
             project,
         } => {
             if let Err(e) = auth_service.ensure_authenticated().await {
@@ -322,12 +323,21 @@ async fn main() -> Result<(), AppError> {
                     .collect()
             });
 
+            let processed_exclude_tags: Option<Vec<String>> = exclude_tags.map(|t| {
+                t.iter()
+                    .flat_map(|s| s.split_whitespace())
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            });
+
             if let Err(e) = recap::execute(
                 &mut auth_service,
                 from.as_deref(),
                 to.as_deref(),
                 since.as_deref(),
                 processed_tags.as_deref(),
+                processed_exclude_tags.as_deref(),
                 project.as_deref(),
             )
             .await

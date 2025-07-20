@@ -276,6 +276,7 @@ pub async fn generate_worklog_recap(
     to: Option<&str>,
     project_ids: Option<&[String]>,
     tags: Option<&[String]>,
+    exclude_tags: Option<&[String]>,
 ) -> Result<RecapResponse, ApiError> {
     let mut params = Vec::new();
 
@@ -298,6 +299,12 @@ pub async fn generate_worklog_recap(
     if let Some(tags_list) = tags {
         if !tags_list.is_empty() {
             params.push(format!("tags={}", tags_list.join(" ")));
+        }
+    }
+
+    if let Some(exclude_tags_list) = exclude_tags {
+        if !exclude_tags_list.is_empty() {
+            params.push(format!("exclude_tags={}", exclude_tags_list.join(" ")));
         }
     }
 
