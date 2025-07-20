@@ -281,12 +281,12 @@ pub async fn generate_worklog_recap(
 
     if let Some(from_date) = from {
         let formatted_date = format_date_for_api(from_date, false)?;
-        params.push(format!("from={}", formatted_date));
+        params.push(format!("from={formatted_date}"));
     }
 
     if let Some(to_date) = to {
         let formatted_date = format_date_for_api(to_date, true)?;
-        params.push(format!("to={}", formatted_date));
+        params.push(format!("to={formatted_date}"));
     }
 
     if let Some(projects) = project_ids {
@@ -307,7 +307,7 @@ pub async fn generate_worklog_recap(
         format!("?{}", params.join("&"))
     };
 
-    let endpoint = format!("api/v1/worklog/recaps{}", query);
+    let endpoint = format!("api/v1/worklog/recaps{query}");
     api_client.post(&endpoint, json!({}), true).await
 }
 
@@ -316,7 +316,7 @@ pub async fn get_recap_status(
     api_client: &ApiClient,
     recap_id: &str,
 ) -> Result<RecapStatusResponse, ApiError> {
-    let endpoint = format!("api/v1/worklog/recaps/{}", recap_id);
+    let endpoint = format!("api/v1/worklog/recaps/{recap_id}");
     api_client.get(&endpoint, true).await
 }
 

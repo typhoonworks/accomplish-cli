@@ -56,10 +56,7 @@ pub async fn execute(
         }
 
         if found_id.is_none() {
-            println!(
-                "⚠️ Warning: No project found with identifier '{}'",
-                identifier
-            );
+            println!("⚠️ Warning: No project found with identifier '{identifier}");
         }
 
         found_id.map(|id| vec![id])
@@ -78,7 +75,7 @@ pub async fn execute(
 
     println!(
         "{}",
-        format!("🤖 Generating recap{}", filter_description).bright_blue()
+        format!("🤖 Generating recap{filter_description}").bright_blue()
     );
     print!("{}", "Analyzing worklog entries...".bright_black());
     io::stdout().flush().unwrap();
@@ -107,19 +104,19 @@ pub async fn execute(
     .await
     .map_err(|e| match e {
         crate::api::errors::ApiError::BadRequest(msg) => {
-            AppError::Other(format!("No worklog entries found for the specified filters.\n\nTry:\n• Expanding your date range\n• Removing project or tag filters\n• Using 'acc logs' to see available entries\n\nAPI response: {}", msg))
+            AppError::Other(format!("No worklog entries found for the specified filters.\n\nTry:\n• Expanding your date range\n• Removing project or tag filters\n• Using 'acc logs' to see available entries\n\nAPI response: {msg}"))
         }
         crate::api::errors::ApiError::Unauthorized(msg) => {
             if msg.contains("not available") {
                 AppError::Other("The recap feature is not available on your current plan. Please upgrade to access AI-powered summaries.".to_string())
             } else {
-                AppError::Other(format!("Authentication failed: {}", msg))
+                AppError::Other(format!("Authentication failed: {msg}"))
             }
         }
         crate::api::errors::ApiError::RateLimited => {
             AppError::Other("You've reached your recap generation limit for this billing cycle. Limits reset monthly.".to_string())
         }
-        _ => AppError::Other(format!("Failed to generate recap: {}", e)),
+        _ => AppError::Other(format!("Failed to generate recap: {e}")),
     })?;
 
     // Clear the "Analyzing..." message
@@ -131,10 +128,9 @@ pub async fn execute(
             // Cache hit - get the content immediately
             if let Some(_poll_url) = &recap_response.poll_url {
                 let recap_id = &recap_response.recap_id;
-                let status_response =
-                    get_recap_status(api_client, recap_id).await.map_err(|e| {
-                        AppError::Other(format!("Failed to fetch recap content: {}", e))
-                    })?;
+                let status_response = get_recap_status(api_client, recap_id)
+                    .await
+                    .map_err(|e| AppError::Other(format!("Failed to fetch recap content: {e}")))?;
 
                 if let Some(content) = status_response.content {
                     print_recap_result(
@@ -206,8 +202,7 @@ async fn poll_for_completion(
                     )))),
                 },
                 Err(e) => Some(Err(AppError::Other(format!(
-                    "Failed to check recap status: {}",
-                    e
+                    "Failed to check recap status: {e}"
                 )))),
             }
         })
@@ -276,16 +271,16 @@ fn build_filter_description(
     let mut parts = Vec::new();
 
     if let Some(since_duration) = since {
-        parts.push(format!("from last {}", since_duration));
+        parts.push(format!("from last {since_duration}"));
     } else if let (Some(from_date), Some(to_date)) = (from, to) {
         // Try to parse and format dates nicely
         let from_formatted = from_date.split('T').next().unwrap_or(from_date);
         let to_formatted = to_date.split('T').next().unwrap_or(to_date);
 
         if from_formatted == to_formatted {
-            parts.push(format!("for {}", from_formatted));
+            parts.push(format!("for {from_formatted}"));
         } else {
-            parts.push(format!("from {} to {}", from_formatted, to_formatted));
+            parts.push(format!("from {from_formatted} to {to_formatted}"));
         }
     } else if let Some(from_date) = from {
         parts.push(format!(
