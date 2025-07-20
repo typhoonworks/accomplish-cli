@@ -5,4 +5,5 @@ pub mod login;
 pub mod logout;
 pub mod logs;
 pub mod project;
+pub mod recap;
 pub mod status;

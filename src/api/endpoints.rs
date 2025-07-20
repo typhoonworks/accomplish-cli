@@ -1,6 +1,8 @@
 use crate::api::client::ApiClient;
 use crate::api::errors::ApiError;
-use crate::api::models::{DeviceCodeResponse, TokenInfoResponse, TokenResponse};
+use crate::api::models::{
+    DeviceCodeResponse, RecapResponse, RecapStatusResponse, TokenInfoResponse, TokenResponse,
+};
 use chrono::{NaiveDate, NaiveTime, TimeZone, Utc};
 use serde_json::{json, Value};
 
@@ -264,6 +266,57 @@ pub async fn fetch_worklog_entries(
     };
 
     let endpoint = format!("api/v1/worklog/entries{query}");
+    api_client.get(&endpoint, true).await
+}
+
+/// Generates a new worklog recap using the API
+pub async fn generate_worklog_recap(
+    api_client: &ApiClient,
+    from: Option<&str>,
+    to: Option<&str>,
+    project_ids: Option<&[String]>,
+    tags: Option<&[String]>,
+) -> Result<RecapResponse, ApiError> {
+    let mut params = Vec::new();
+
+    if let Some(from_date) = from {
+        let formatted_date = format_date_for_api(from_date, false)?;
+        params.push(format!("from={}", formatted_date));
+    }
+
+    if let Some(to_date) = to {
+        let formatted_date = format_date_for_api(to_date, true)?;
+        params.push(format!("to={}", formatted_date));
+    }
+
+    if let Some(projects) = project_ids {
+        if !projects.is_empty() {
+            params.push(format!("project_ids={}", projects.join(",")));
+        }
+    }
+
+    if let Some(tags_list) = tags {
+        if !tags_list.is_empty() {
+            params.push(format!("tags={}", tags_list.join(" ")));
+        }
+    }
+
+    let query = if params.is_empty() {
+        String::new()
+    } else {
+        format!("?{}", params.join("&"))
+    };
+
+    let endpoint = format!("api/v1/worklog/recaps{}", query);
+    api_client.post(&endpoint, json!({}), true).await
+}
+
+/// Fetches the status and content of a recap by ID
+pub async fn get_recap_status(
+    api_client: &ApiClient,
+    recap_id: &str,
+) -> Result<RecapStatusResponse, ApiError> {
+    let endpoint = format!("api/v1/worklog/recaps/{}", recap_id);
     api_client.get(&endpoint, true).await
 }
 

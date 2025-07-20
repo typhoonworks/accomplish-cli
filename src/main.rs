@@ -12,7 +12,7 @@ use crate::api::errors::ApiError;
 use auth::AuthService;
 use clap::Parser;
 use cli::{Cli, Commands, ProjectCommands};
-use commands::{capture, init, log, login, logout, logs, project, status};
+use commands::{capture, init, log, login, logout, logs, project, recap, status};
 use config::Settings;
 use errors::AppError;
 use serde_json::Value;
@@ -184,26 +184,9 @@ async fn main() -> Result<(), AppError> {
             }
         }
         Commands::Project { command } => {
-            if let Err(e) = auth_service.ensure_authenticated().await {
-                if matches!(e, AppError::Auth(_)) {
-                    eprintln!();
-                    eprintln!("You are not authenticated. Run `accomplish login` first.");
-                    process::exit(1);
-                } else {
-                    eprintln!();
-                    eprintln!("error: {e}");
-                    process::exit(1);
-                }
-            }
-
             match command {
-                ProjectCommands::List => {
-                    if let Err(e) = project::list(&mut auth_service).await {
-                        eprintln!("\nerror: {e}");
-                        process::exit(1);
-                    }
-                }
                 ProjectCommands::Current => {
+                    // This command doesn't need authentication - it just reads local config
                     let default = settings.default_project.clone().or_else(|| {
                         config::lookup_default_project_for_dir(&env::current_dir().unwrap())
                     });
@@ -212,21 +195,45 @@ async fn main() -> Result<(), AppError> {
                         None => println!("(no default project configured)"),
                     }
                 }
-                ProjectCommands::New {
-                    name,
-                    description,
-                    identifier,
-                } => {
-                    if let Err(e) = project::create_project(
-                        &mut auth_service,
-                        &name,
-                        description.as_deref(),
-                        identifier.as_deref(),
-                    )
-                    .await
-                    {
-                        eprintln!("\nerror: {e}");
-                        process::exit(1);
+                ProjectCommands::List | ProjectCommands::New { .. } => {
+                    // These commands need authentication
+                    if let Err(e) = auth_service.ensure_authenticated().await {
+                        if matches!(e, AppError::Auth(_)) {
+                            eprintln!();
+                            eprintln!("You are not authenticated. Run `accomplish login` first.");
+                            process::exit(1);
+                        } else {
+                            eprintln!();
+                            eprintln!("error: {e}");
+                            process::exit(1);
+                        }
+                    }
+
+                    match command {
+                        ProjectCommands::List => {
+                            if let Err(e) = project::list(&mut auth_service).await {
+                                eprintln!("\nerror: {e}");
+                                process::exit(1);
+                            }
+                        }
+                        ProjectCommands::New {
+                            name,
+                            description,
+                            identifier,
+                        } => {
+                            if let Err(e) = project::create_project(
+                                &mut auth_service,
+                                &name,
+                                description.as_deref(),
+                                identifier.as_deref(),
+                            )
+                            .await
+                            {
+                                eprintln!("\nerror: {e}");
+                                process::exit(1);
+                            }
+                        }
+                        _ => unreachable!(),
                     }
                 }
             }
@@ -281,6 +288,47 @@ async fn main() -> Result<(), AppError> {
                 to.as_deref(),
                 limit,
                 verbose,
+            )
+            .await
+            {
+                eprintln!("\nerror: {e}");
+                process::exit(1);
+            }
+        }
+        Commands::Recap {
+            from,
+            to,
+            since,
+            tags,
+            project,
+        } => {
+            if let Err(e) = auth_service.ensure_authenticated().await {
+                if matches!(e, AppError::Auth(_)) {
+                    eprintln!();
+                    eprintln!("You are not authenticated. Run `accomplish login` first.");
+                    process::exit(1);
+                } else {
+                    eprintln!();
+                    eprintln!("error: {e}");
+                    process::exit(1);
+                }
+            }
+
+            let processed_tags: Option<Vec<String>> = tags.map(|t| {
+                t.iter()
+                    .flat_map(|s| s.split_whitespace())
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            });
+
+            if let Err(e) = recap::execute(
+                &mut auth_service,
+                from.as_deref(),
+                to.as_deref(),
+                since.as_deref(),
+                processed_tags.as_deref(),
+                project.as_deref(),
             )
             .await
             {

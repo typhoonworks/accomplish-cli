@@ -96,6 +96,29 @@ pub enum Commands {
         #[arg(short = 'v', long = "verbose")]
         verbose: bool,
     },
+
+    /// Generate an AI-powered summary of worklog entries
+    Recap {
+        /// Start date (inclusive, YYYY-MM-DD format)
+        #[arg(long = "from")]
+        from: Option<String>,
+
+        /// End date (inclusive, YYYY-MM-DD format)
+        #[arg(long = "to")]
+        to: Option<String>,
+
+        /// Look back from now by duration (e.g. "24h", "3h30m", "2d", "1w")
+        #[arg(long = "since")]
+        since: Option<String>,
+
+        /// Filter by space-separated tags
+        #[arg(short = 't', long = "tags", value_delimiter = ' ')]
+        tags: Option<Vec<String>>,
+
+        /// Filter by project identifier (3-letter code)
+        #[arg(short = 'p', long = "project")]
+        project: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
