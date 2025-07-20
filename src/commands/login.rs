@@ -18,14 +18,14 @@ pub async fn execute(auth_service: &mut AuthService, client_id: &str) -> Result<
     let resp = initiate_device_code(auth_service.api_client(), client_id)
         .await
         .map_err(AppError::Api)?;
+    // open browser immediately
+    let _ = webbrowser::open(&resp.verification_uri_complete);
+
     println!(
         "\nVisit {} and enter code {} then press Enter...",
         resp.verification_uri, resp.user_code
     );
     let _ = std::io::stdin().read_line(&mut String::new());
-
-    // open browser
-    let _ = webbrowser::open(&resp.verification_uri_complete);
 
     // wait for callback
     let code = rx.await.map_err(|_| AppError::Callback)?;
