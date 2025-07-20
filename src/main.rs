@@ -331,6 +331,10 @@ async fn main() -> Result<(), AppError> {
                     .collect()
             });
 
+            let resolved_project = project
+                .or_else(|| config::lookup_default_project_for_dir(&env::current_dir().unwrap()))
+                .or(settings.default_project.clone());
+
             if let Err(e) = recap::execute(
                 &mut auth_service,
                 from.as_deref(),
@@ -338,7 +342,7 @@ async fn main() -> Result<(), AppError> {
                 since.as_deref(),
                 processed_tags.as_deref(),
                 processed_exclude_tags.as_deref(),
-                project.as_deref(),
+                resolved_project.as_deref(),
             )
             .await
             {

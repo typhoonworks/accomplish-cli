@@ -60,6 +60,7 @@ For detailed usage instructions, see the [User Guide](USER_GUIDE.md).
 - `acc logout` - Sign out of your account
 - `acc log` - Record a work entry
 - `acc logs` - View work entries
+- `acc recap` - Generate AI-powered work summaries
 - `acc project` - Manage projects
 - `acc status` - Show current status
 - `acc init` - Initialize configuration

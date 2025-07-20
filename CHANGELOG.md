@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-07-20
+
 ### Added
 - New `acc recap` command for generating AI-powered worklog summaries with real-time progress updates via SSE streaming
+  - Automatically uses the current project (like `acc log` and `acc logs`) when no project is explicitly specified
+  - Supports filtering by tags with `-t, --tags` flag
+  - Supports excluding entries with specific tags using `-x, --exclude-tags` flag
+  - Supports date filtering with `--from`, `--to`, and `--since` options
 - Server-Sent Events (SSE) support with automatic fallback to polling for robust recap generation
-- Exclude tags support for `acc recap` command with `-x, --exclude-tags` flag for filtering out entries with specific tags
 - Enhanced duration parsing with human-friendly expressions: `yesterday`, `today`, `this-week`, `last-week`, `this-month`, `last-month`
 - Dependabot configuration for automated dependency updates
 
@@ -67,7 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Migrated from version 0.2.0 to 0.1.0 following SemVer conventions for pre-release software
 
-[Unreleased]: https://github.com/typhoonworks/accomplish-cli/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/typhoonworks/accomplish-cli/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/typhoonworks/accomplish-cli/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/typhoonworks/accomplish-cli/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/typhoonworks/accomplish-cli/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/typhoonworks/accomplish/compare/cli-v0.1.1...cli-v0.1.2
 [0.1.1]: https://github.com/typhoonworks/accomplish/compare/cli-v0.1.0...cli-v0.1.1

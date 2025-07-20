@@ -67,6 +67,7 @@ acc --help
 acc log --help
 acc project --help
 acc logs --help
+acc recap --help
 ```
 
 Each command shows:
@@ -145,6 +146,38 @@ acc logs --from 2025-01-09 --to 2025-01-16
 
 # Full content view
 acc logs -v
+```
+
+#### `acc recap`
+Generate AI-powered summaries of your work log entries.
+
+**Options:**
+- `-p, --project <PROJECT>`: Filter by project identifier (uses current project by default)
+- `-t, --tags <TAGS>`: Filter by comma-separated tags
+- `-x, --exclude-tags <TAGS>`: Exclude entries with specific tags
+- `--from <DATE>`: Start date (YYYY-MM-DD format)
+- `--to <DATE>`: End date (YYYY-MM-DD format)
+- `--since <PERIOD>`: Time period (e.g., "1d", "1w", "2w", "1m")
+
+**Examples:**
+```bash
+# Generate recap for current project
+acc recap
+
+# Recap for specific project
+acc recap -p ABC
+
+# Recap for last week
+acc recap --since last-week
+
+# Recap for specific date range
+acc recap --from 2025-01-09 --to 2025-01-16
+
+# Recap with specific tags
+acc recap -t backend,api
+
+# Recap excluding certain tags
+acc recap -x meeting,admin
 ```
 
 ### Project Management
