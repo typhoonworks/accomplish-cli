@@ -240,7 +240,7 @@ impl ApiClient {
                     let text = String::from_utf8_lossy(&chunk);
                     parse_sse_events(&text)
                 }
-                Err(e) => vec![Err(ApiError::Unexpected(format!("Stream error: {}", e)))],
+                Err(e) => vec![Err(ApiError::Unexpected(format!("Stream error: {e}")))],
             })
             .flat_map(futures::stream::iter);
 
@@ -271,14 +271,12 @@ fn parse_sse_events(text: &str) -> Vec<Result<SseEvent, ApiError>> {
                             events.push(Err(ApiError::NotFound(error_msg.to_string())));
                         } else {
                             events.push(Err(ApiError::DecodeError(format!(
-                                "Failed to parse SSE event: {}",
-                                e
+                                "Failed to parse SSE event: {e}"
                             ))));
                         }
                     } else {
                         events.push(Err(ApiError::DecodeError(format!(
-                            "Failed to parse SSE event: {}",
-                            e
+                            "Failed to parse SSE event: {e}"
                         ))));
                     }
                 }
