@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Updated `rand` crate from 0.8.5 to 0.9.2
+- Updated spinner utility to use new rand 0.9 API (`thread_rng()` → `rng()`, updated imports)
+
 ## [0.4.0] - 2025-07-20
 
 ### Added

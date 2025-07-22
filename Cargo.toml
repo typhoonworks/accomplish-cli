@@ -28,7 +28,7 @@ dirs-next = "2.0"
 futures = "0.3"
 git2 = { version = "0.18", default-features = false }
 inquire = "0.7"
-rand = "0.9"
+rand = "0.9.2"
 regex = "1.10"
 reqwest = { version = "0.12", features = [
     "json",
