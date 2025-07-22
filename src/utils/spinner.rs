@@ -1,5 +1,5 @@
 use colored::*;
-use rand::seq::SliceRandom;
+use rand::prelude::*;
 use std::io::{self, Write};
 use std::time::{Duration, Instant};
 use tokio::time::sleep;
@@ -51,7 +51,7 @@ pub struct Spinner {
 
 impl Spinner {
     pub fn new() -> Self {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let phrase = WAITING_PHRASES
             .choose(&mut rng)
             .unwrap_or(&"Processing")
