@@ -119,18 +119,20 @@ pub async fn create_project(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockito::{mock, server_url};
+    use mockito::Server;
     use serde_json::json;
 
-    fn setup_mock_auth_service() -> AuthService {
-        let mut auth = AuthService::new(server_url(), std::env::temp_dir(), "test-profile");
+    fn setup_mock_auth_service(server_url: &str) -> AuthService {
+        let mut auth =
+            AuthService::new(server_url.to_string(), std::env::temp_dir(), "test-profile");
         auth.save_access_token("test-token").unwrap();
         auth
     }
 
     #[tokio::test]
     async fn test_get_projects_success() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
 
         let response = json!({
             "projects": [
@@ -147,7 +149,8 @@ mod tests {
             ]
         });
 
-        let _m = mock("GET", "/api/v1/projects")
+        let _m = server
+            .mock("GET", "/api/v1/projects")
             .match_header("authorization", "Bearer test-token")
             .with_status(200)
             .with_header("content-type", "application/json")
@@ -169,13 +172,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_projects_empty() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
 
         let response = json!({
             "projects": []
         });
 
-        let _m = mock("GET", "/api/v1/projects")
+        let _m = server
+            .mock("GET", "/api/v1/projects")
             .match_header("authorization", "Bearer test-token")
             .with_status(200)
             .with_header("content-type", "application/json")
@@ -189,9 +194,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_projects_unauthorized() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
 
-        let _m = mock("GET", "/api/v1/projects")
+        let _m = server
+            .mock("GET", "/api/v1/projects")
             .match_header("authorization", "Bearer test-token")
             .with_status(401)
             .with_header("content-type", "application/json")
@@ -204,7 +211,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_project_success() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
 
         let response = json!({
             "id": "project-uuid-123",
@@ -217,7 +225,8 @@ mod tests {
             "updated_at": "2025-07-07T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/projects")
+        let _m = server
+            .mock("POST", "/api/v1/projects")
             .match_header("authorization", "Bearer test-token")
             .with_status(201)
             .with_body(response.to_string())
@@ -235,7 +244,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_project_minimal() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
 
         let response = json!({
             "id": "project-uuid-456",
@@ -247,7 +257,8 @@ mod tests {
             "updated_at": "2025-07-07T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/projects")
+        let _m = server
+            .mock("POST", "/api/v1/projects")
             .match_header("authorization", "Bearer test-token")
             .with_status(201)
             .with_body(response.to_string())
@@ -259,7 +270,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_project_validation_errors() {
-        let mut auth = setup_mock_auth_service();
+        let server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
 
         // Test empty name
         let result = create_project(&mut auth, "", None, None).await;
