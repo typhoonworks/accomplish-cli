@@ -330,13 +330,15 @@ pub async fn get_recap_status(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockito::{mock, server_url, Matcher};
+    use mockito::{Matcher, Server};
     use serde_json::{json, Value};
     use tokio;
 
     #[tokio::test]
     async fn test_initiate_device_code() {
-        let _m = mock("POST", "/auth/device/code")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/auth/device/code")
             .match_body(Matcher::Json(json!({
                 "client_id": "test-client-id",
                 "scope": CLI_SCOPES
@@ -354,7 +356,7 @@ mod tests {
             )
             .create();
 
-        let api_client = ApiClient::new(&mockito::server_url());
+        let api_client = ApiClient::new(&server.url());
         let got = initiate_device_code(&api_client, "test-client-id")
             .await
             .expect("Expected Ok");
@@ -368,7 +370,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_exchange_device_code_for_token() {
-        let _m = mock("POST", "/auth/device/token")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/auth/device/token")
             .match_body(Matcher::Json(json!({
                 "device_code": "device_code_123"
             })))
@@ -385,7 +389,7 @@ mod tests {
             )
             .create();
 
-        let api_client = ApiClient::new(&mockito::server_url());
+        let api_client = ApiClient::new(&server.url());
         let tok = exchange_device_code_for_token(&api_client, "device_code_123")
             .await
             .expect("Expected Ok");
@@ -399,6 +403,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_worklog_entry() {
+        let mut server = Server::new_async().await;
         let payload = json!({
             "content": "Test entry",
             "recorded_at": "2025-05-16T12:00:00Z"
@@ -413,14 +418,15 @@ mod tests {
         })
         .to_string();
 
-        let _m = mock("POST", "/api/v1/worklog/entries")
+        let _m = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload.clone()))
             .with_status(201)
             .with_body(response_body.clone())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         // Set a dummy token so that use_auth = true won't fail
         api_client.set_access_token("dummy-token".into());
 
@@ -476,14 +482,16 @@ mod tests {
             ]
         });
 
-        let _m = mock("GET", "/api/v1/projects")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("GET", "/api/v1/projects")
             .match_header("authorization", "Bearer dummy-token")
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_body(response.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let result = fetch_projects(&api_client).await.expect("Expected Ok");
@@ -506,6 +514,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_worklog_entry_with_tags() {
+        let mut server = Server::new_async().await;
         let payload = json!({
             "content": "Test entry with tags",
             "recorded_at": "2025-05-16T12:00:00Z",
@@ -520,14 +529,15 @@ mod tests {
             "url": "/api/v1/worklog/entries/efgh-5678-uuid"
         });
 
-        let _m = mock("POST", "/api/v1/worklog/entries")
+        let _m = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(201)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let tags = vec!["rust".to_string(), "cli".to_string()];
@@ -586,14 +596,16 @@ mod tests {
             "url": "/api/v1/worklog/entries/ijkl-9012-uuid"
         });
 
-        let _m = mock("POST", "/api/v1/worklog/entries")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(201)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = create_worklog_entry(
@@ -641,14 +653,16 @@ mod tests {
             "updated_at": "2025-07-07T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/projects")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/api/v1/projects")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(201)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = create_project(
@@ -706,14 +720,16 @@ mod tests {
             "updated_at": "2025-07-07T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/projects")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/api/v1/projects")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(201)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = create_project(&api_client, "Minimal Project", None, None)
@@ -753,14 +769,16 @@ mod tests {
             "updated_at": "2025-07-09T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/repositories")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/api/v1/repositories")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(201)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = create_repo(
@@ -819,14 +837,16 @@ mod tests {
             "updated_at": "2025-07-09T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/repositories")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/api/v1/repositories")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(201)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = create_repo(
@@ -874,14 +894,16 @@ mod tests {
             "updated_at": "2025-07-09T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/repositories")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/api/v1/repositories")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(201)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = create_repo(
@@ -931,14 +953,16 @@ mod tests {
             "updated_at": "2025-07-09T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/repositories")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/api/v1/repositories")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(201)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = create_repo(
@@ -985,14 +1009,16 @@ mod tests {
             }
         });
 
-        let _m = mock("POST", "/api/v1/repositories")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/api/v1/repositories")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(422)
             .with_body(error_response.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let result = create_repo(
@@ -1022,14 +1048,16 @@ mod tests {
             "exp": 1672531200
         });
 
-        let _m = mock("POST", "/auth/token_info")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/auth/token_info")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(200)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = check_token_info(&api_client, "test-access-token")
@@ -1052,14 +1080,16 @@ mod tests {
             "active": false
         });
 
-        let _m = mock("POST", "/auth/token_info")
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock("POST", "/auth/token_info")
             .match_header("authorization", Matcher::Any)
             .match_body(Matcher::Json(payload))
             .with_status(200)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let result = check_token_info(&api_client, "expired-token").await;
@@ -1070,6 +1100,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_worklog_entries_basic() {
+        let mut server = Server::new_async().await;
         let response_body = json!({
             "entries": [
                 {
@@ -1098,13 +1129,14 @@ mod tests {
             }
         });
 
-        let _m = mock("GET", "/api/v1/worklog/entries?limit=20")
+        let _m = server
+            .mock("GET", "/api/v1/worklog/entries?limit=20")
             .match_header("authorization", Matcher::Any)
             .with_status(200)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = fetch_worklog_entries(&api_client, None, None, None, None, 20, None)
@@ -1144,16 +1176,18 @@ mod tests {
 
         let expected_params = "limit=10&project_id=specific-project&tags=development,feature&from=2025-07-01T00:00:00Z&to=2025-07-09T23:59:59Z&starting_after=cursor-123";
 
-        let _m = mock(
-            "GET",
-            format!("/api/v1/worklog/entries?{expected_params}").as_str(),
-        )
-        .match_header("authorization", Matcher::Any)
-        .with_status(200)
-        .with_body(response_body.to_string())
-        .create();
+        let mut server = Server::new_async().await;
+        let _m = server
+            .mock(
+                "GET",
+                format!("/api/v1/worklog/entries?{expected_params}").as_str(),
+            )
+            .match_header("authorization", Matcher::Any)
+            .with_status(200)
+            .with_body(response_body.to_string())
+            .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let tags = vec!["development".to_string(), "feature".to_string()];
@@ -1180,6 +1214,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_worklog_entries_empty() {
+        let mut server = Server::new_async().await;
         let response_body = json!({
             "entries": [],
             "meta": {
@@ -1191,13 +1226,14 @@ mod tests {
             }
         });
 
-        let _m = mock("GET", "/api/v1/worklog/entries?limit=20")
+        let _m = server
+            .mock("GET", "/api/v1/worklog/entries?limit=20")
             .match_header("authorization", Matcher::Any)
             .with_status(200)
             .with_body(response_body.to_string())
             .create();
 
-        let mut api_client = ApiClient::new(&mockito::server_url());
+        let mut api_client = ApiClient::new(&server.url());
         api_client.set_access_token("dummy-token".into());
 
         let resp = fetch_worklog_entries(&api_client, None, None, None, None, 20, None)

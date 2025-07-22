@@ -100,18 +100,20 @@ pub async fn execute(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockito::{mock, server_url, Matcher};
+    use mockito::{Matcher, Server};
     use serde_json::json;
 
-    fn setup_mock_auth_service() -> AuthService {
-        let mut auth = AuthService::new(server_url(), std::env::temp_dir(), "test-profile");
+    fn setup_mock_auth_service(server_url: &str) -> AuthService {
+        let mut auth =
+            AuthService::new(server_url.to_string(), std::env::temp_dir(), "test-profile");
         auth.save_access_token("test-token").unwrap();
         auth
     }
 
     #[tokio::test]
     async fn test_execute_success() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
 
         let response = json!({
             "id": "id-123",
@@ -119,7 +121,8 @@ mod tests {
             "recorded_at": "2025-05-17T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/worklog/entries")
+        let _m = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", "Bearer test-token")
             .match_body(Matcher::PartialJson(json!({ "content": "Test message" })))
             .with_status(201)
@@ -133,7 +136,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_with_multiple_messages() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
         let messages = vec!["Line 1".into(), "Line 2".into()];
         let joined = "Line 1\n\nLine 2";
 
@@ -143,7 +147,8 @@ mod tests {
             "recorded_at": "2025-05-17T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/worklog/entries")
+        let _m = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", "Bearer test-token")
             .match_body(Matcher::PartialJson(json!({ "content": joined })))
             .with_status(201)
@@ -157,7 +162,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_with_tags() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
         let tags = vec!["rust".into(), "cli".into()];
         let response = json!({
             "id": "id-789",
@@ -166,7 +172,8 @@ mod tests {
             "tags": tags
         });
 
-        let _m = mock("POST", "/api/v1/worklog/entries")
+        let _m = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", "Bearer test-token")
             .match_body(Matcher::PartialJson(json!({
                 "content": "Message with tags",
@@ -183,9 +190,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_api_error() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
 
-        let _m = mock("POST", "/api/v1/worklog/entries")
+        let _m = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", "Bearer test-token")
             .match_body(Matcher::PartialJson(json!({ "content": "Err message" })))
             .with_status(400)
@@ -199,7 +208,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_with_multiline_content() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
         // Note: In this test we're directly passing a single string with embedded newlines
         // rather than multiple message strings that get joined
         let content = "This is a multiline entry\n\nwith multiple paragraphs\n\nAnd some spacing.";
@@ -210,7 +220,8 @@ mod tests {
             "recorded_at": "2025-05-17T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/worklog/entries")
+        let _m = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", "Bearer test-token")
             .match_body(Matcher::PartialJson(json!({ "content": content })))
             .with_status(201)
@@ -225,7 +236,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_with_project() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
         let project_id = "website";
         let project_identifier = "web";
 
@@ -239,7 +251,8 @@ mod tests {
             ]
         });
 
-        let _projects_mock = mock("GET", "/api/v1/projects")
+        let _projects_mock = server
+            .mock("GET", "/api/v1/projects")
             .match_header("authorization", "Bearer test-token")
             .with_status(200)
             .with_header("content-type", "application/json")
@@ -254,7 +267,8 @@ mod tests {
             "project_url": "/api/v1/projects/website"
         });
 
-        let _entry_mock = mock("POST", "/api/v1/worklog/entries")
+        let _entry_mock = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", "Bearer test-token")
             .match_body(Matcher::PartialJson(json!({
                 "content": "Entry with project",
@@ -363,7 +377,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_with_url_conversion() {
-        let mut auth = setup_mock_auth_service();
+        let mut server = Server::new_async().await;
+        let mut auth = setup_mock_auth_service(&server.url());
         let messages = vec!["Planning approach for https://gitlab.silverfin.com/development/silverfin/-/issues/26766".into()];
         let expected_content = "Planning approach for [https://gitlab.silverfin.com/development/silverfin/-/issues/26766](https://gitlab.silverfin.com/development/silverfin/-/issues/26766)";
 
@@ -373,7 +388,8 @@ mod tests {
             "recorded_at": "2025-05-17T12:00:00Z"
         });
 
-        let _m = mock("POST", "/api/v1/worklog/entries")
+        let _m = server
+            .mock("POST", "/api/v1/worklog/entries")
             .match_header("authorization", "Bearer test-token")
             .match_body(Matcher::PartialJson(json!({ "content": expected_content })))
             .with_status(201)
